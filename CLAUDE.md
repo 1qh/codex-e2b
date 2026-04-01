@@ -1,6 +1,6 @@
 # codex-e2b
 
-Codex CLI (`@openai/codex`) running in E2B sandboxes (`e2b`), streamed to the browser via xterm.js (`@xterm/xterm`).
+Codex CLI (`@openai/codex`) running in E2B sandboxes, streamed to the browser via structured JSONL events.
 
 ## Working directory
 
@@ -8,46 +8,61 @@ Codex CLI (`@openai/codex`) running in E2B sandboxes (`e2b`), streamed to the br
 
 ## Key insight
 
-PTY streaming gives full observability — every tool call, result, and thinking block is visible in the terminal output. No middleware, no event parsing, no black boxes.
+`codex exec --json` gives structured events (agent_message, file_change, command_execution, usage) over JSONL. PTY streaming is kept as a fallback for raw terminal view but exec is the primary mode.
 
-## Codex CLI flags
+## Codex CLI
 
 ```
-codex --dangerously-bypass-approvals-and-sandbox --search --no-alt-screen "prompt"
+codex exec --dangerously-bypass-approvals-and-sandbox --json "prompt"
 ```
 
+- `exec` — non-interactive, JSONL event stream
 - `--dangerously-bypass-approvals-and-sandbox` — skip all approvals (E2B IS the sandbox)
-- `--search` — enable native GPT web search via OpenAI Responses API
-- `--no-alt-screen` — inline TUI mode, preserves scrollback
+- `--json` — structured events instead of TUI
+- Trust prompt bypassed via `config.toml` with `trust_level = "trusted"`
 
-## E2B sandbox setup sequence
+## E2B sandbox
 
-1. `Sandbox.create({ apiKey, timeoutMs: 300_000 })`
-2. `sandbox.commands.run('npm install -g @openai/codex', { timeoutMs: 120_000 })`
-3. Copy `~/.codex/auth.json` via `sandbox.files.write()`
-4. `sandbox.commands.run('git init && git config ...')` (Codex requires git)
-5. `sandbox.pty.create({ cols, rows, onData, envs: { TERM: 'xterm-256color' } })`
-6. `sandbox.pty.sendInput(pid, 'codex --flags "prompt"\n')`
-7. Auto-accept trust prompt: detect “Press enter to continue” in onData, send `\r`
+Custom template `codex-sandbox` with bun + codex + git pre-baked. Boots in ~1.2s.
+
+Setup at runtime is just one `files.write` for auth.json. Everything else is in the template:
+
+- bun at `/home/user/.bun/bin/`
+- codex globally installed
+- git initialized at `/home/user`
+- `config.toml` with trust_level = “trusted”
+
+Home is always `/home/user` — hardcoded, no lookup needed.
 
 ## Auth
 
-- Codex uses OAuth stored in `~/.codex/auth.json` (from `bunx @openai/codex login`)
-- Token refreshes needed — access tokens expire
-- In E2B: copy the auth.json file into sandbox via `sandbox.files.write()`
+- User provides credential on WS init: API key (`sk-...`) or OAuth auth.json content
+- API keys get wrapped: `{"OPENAI_API_KEY": "sk-...", "auth_mode": "api-key"}`
+- OAuth auth.json passed through directly
+- Written to `/home/user/.codex/auth.json` via `sandbox.files.write()`
+- Hot-swap via `POST /credential` with Bearer auth — rewrites auth.json in all live sandboxes
+- Each `codex exec` reads auth.json fresh — swap is invisible to users
+
+## WS protocol
+
+```
+→ { type: "init", credential: "sk-..." }     // or auth.json content
+← { type: "status", message: "preparing..." }
+← { type: "status", message: "sandbox ready" }
+→ { type: "prompt", prompt: "create hello.txt" }
+← { type: "event", event: { type: "item.completed", item: {...} } }
+← { type: "done" }
+```
 
 ## Stack
 
 - **bun** runtime, no npm/yarn
 - **Next.js 16** frontend (React 19, Turbopack)
-- **Elysia** WebSocket server for PTY bridge (separate port 3001)
-- **@xterm/xterm 6** terminal renderer
-- **@xterm/addon-fit** auto-resize
-- **better-auth** authentication
-- **Drizzle + TimescaleDB** persistence
-- **t3-env** validated env vars
-- **lintmax** strict linting
-- **lib/ui** from noboil (shadcn, @a/ui workspace package)
+- **Elysia** WebSocket server (port 3001)
+- **E2B** Firecracker micro-VMs with custom template
+- **t3-env** validated env vars (E2B_API_KEY, ADMIN_SECRET, PORT)
+- **lintmax** strict linting (biome + oxlint + eslint + prettier)
+- **lib/ui** from noboil (shadcn, @a/ui workspace package, read-only)
 - **Tailwind v4** with OKLCH dark theme
 
 ## Constraints
@@ -55,10 +70,11 @@ codex --dangerously-bypass-approvals-and-sandbox --search --no-alt-screen "promp
 - Arrow functions only, exports at end of file
 - No comments, no `any`, no `as`, no `!`
 - Single `.env` at root, fail fast via t3-env
-- `bun clean` on pre-commit hook
-- Test before ship — real e2e tests with E2B
+- Pre-commit hook: `bun clean && bun i && bun fix`
+- Test before ship — real e2e tests with E2B sandboxes
 - Never hardcode values, use env vars
 - lib/ui is read-only (synced from noboil)
+- Minimal DOM — no redundant wrappers, no nested divs, semantic elements
 
 ## Working rule
 
@@ -72,7 +88,7 @@ Never report code as done without testing it yourself first. Run it, verify the 
 
 ## Build plan
 
-See PLAN.md for phases. Phase 1 = terminal in browser (MVP).
+See PLAN.md for phases and lessons learned. Phase 1 MVP is complete.
 
 ## Brainstorm docs
 
