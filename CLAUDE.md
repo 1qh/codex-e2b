@@ -60,6 +60,10 @@ codex --dangerously-bypass-approvals-and-sandbox --search --no-alt-screen "promp
 - Never hardcode values, use env vars
 - lib/ui is read-only (synced from noboil)
 
+## Working rule
+
+Never report code as done without testing it yourself first. Run it, verify the output, fix any issues. Only then report what works, what the user can run to see it in action, and how to interpret the results. No blind coding — proof before progress.
+
 ## Commit rules
 
 - NEVER mention AI tooling, Claude, or AI SDK in commit messages
