@@ -1,10 +1,19 @@
 import type { Sandbox } from 'e2b'
 import { Elysia, t } from 'elysia'
 import { env } from './env'
-import { createSandbox, runCodex } from './sandbox'
+import { createSandbox, runCodex, updateCredential } from './sandbox'
 const sessions = new Map<string, Sandbox>(),
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app = new Elysia()
+    .post(
+      '/credential',
+      async ({ body }) => {
+        const promises = [...sessions.values()].map(async sandbox => updateCredential(sandbox, body.credential))
+        await Promise.all(promises)
+        return { updated: promises.length }
+      },
+      { body: t.Object({ credential: t.String() }) }
+    )
     .ws('/ws', {
       body: t.Union([
         t.Object({ credential: t.String(), type: t.Literal('init') }),
