@@ -62,6 +62,23 @@ codex --dangerously-bypass-approvals-and-sandbox --search --no-alt-screen "promp
 - Never hardcode values, use env vars
 - lib/ui is read-only (synced from noboil)
 
+## Commit rules
+
+- NEVER mention AI tooling, Claude, or AI SDK in commit messages
+- No Co-Authored-By lines
+- Commit messages describe what changed, not how
+
 ## Build plan
 
 See PLAN.md for phases. Phase 1 = terminal in browser (MVP).
+
+## Brainstorm docs
+
+Applicable docs from experiments preserved in `brainstorm/`:
+- `vision.md` — fire-and-forget agent-native SaaS concept
+- `agent-native.md` — CLIs as backend, knowledge as files
+- `boundaries.md` — what this is and is NOT good for
+- `feedback.md` — ratings, redo, agent learning loop
+- `personalization.md` — memory as core, workspace handles it
+- `observability.md` — usage tracking, metering (needs rewrite for new stack)
+- `lessons-learned.md` — what we learned from OpenClaw and pi experiments
