@@ -6,6 +6,7 @@
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun",
     "dev": "bun run --env-file=../../.env --watch src/index.ts",
+    "test": "cd ../.. && ADMIN_SECRET=${ADMIN_SECRET:-test-secret} bun test lib/server/test --timeout 300000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -2,7 +2,7 @@
   "extends": "lintmax/tsconfig",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node", "bun-types"]
+    "types": ["bun-types", "node"]
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }

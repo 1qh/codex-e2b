@@ -9,9 +9,10 @@ const sessions = new Map<string, Sandbox>(),
       '/credential',
       async ({ body, headers }) => {
         if (headers.authorization !== `Bearer ${env.ADMIN_SECRET}`) return new Response('unauthorized', { status: 401 })
-        const promises = [...sessions.values()].map(async sandbox => updateCredential(sandbox, body.credential))
-        await Promise.all(promises)
-        return { updated: promises.length }
+        const results = await Promise.allSettled(
+          [...sessions.values()].map(async sandbox => updateCredential(sandbox, body.credential))
+        )
+        return { updated: results.filter(r => r.status === 'fulfilled').length }
       },
       { body: t.Object({ credential: t.String() }) }
     )
