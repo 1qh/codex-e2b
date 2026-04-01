@@ -17,23 +17,23 @@ Codex CLI running in E2B sandboxes, streamed to the browser via xterm.js.
 
 - [x] Codex CLI installs in E2B sandbox
 - [x] OAuth auth via `~/.codex/auth.json` works in E2B
-- [x] Trust prompt auto-accepted via `\r` on “Yes, continue”
+- [x] Trust prompt bypassed via `config.toml` trust_level
 - [x] `--search` enables native GPT web search
 - [x] `--dangerously-bypass-approvals-and-sandbox` skips approvals (E2B is the sandbox)
-- [x] `--no-alt-screen` streams inline TUI
-- [x] PTY streams 743KB of TUI output through WebSocket
+- [x] `--no-alt-screen` streams inline TUI (poc.ts)
+- [x] `codex exec --json` streams structured JSONL events (poc-exec.ts)
+- [x] PTY streams 743KB of TUI output
 - [x] File creation works in sandbox
 - [x] GPT 5.4 via OpenAI Pro subscription
 
 ## Build Order
 
-### Phase 1 — Terminal in browser (MVP)
+### Phase 1 — Exec events in browser (MVP)
 
-1. Elysia WS server: spawn E2B sandbox, install Codex, bridge PTY
-2. Auto-accept trust prompt on connect
-3. xterm.js component rendering full Codex TUI
-4. Next.js page with terminal
-5. e2e test: connect → prompt → verify file created
+1. Elysia WS server: spawn E2B sandbox, install Codex, stream exec JSONL events
+2. Next.js page with chat UI rendering agent messages + file changes
+3. e2e test: connect → prompt → verify file created
+4. PTY live feed (xterm.js) as optional “watch mode” later
 
 ### Phase 2 — Auth + persistence
 
