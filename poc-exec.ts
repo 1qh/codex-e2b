@@ -16,28 +16,25 @@ await sandbox.commands.run(`mkdir -p ${home}/.codex`)
 await sandbox.files.write(`${home}/.codex/auth.json`, CODEX_AUTH)
 await sandbox.files.write(`${home}/.codex/config.toml`, `[projects."${home}"]\ntrust_level = "trusted"\n`)
 await sandbox.commands.run(`cd ${home} && git init && git config user.email u@claw.dev && git config user.name claw`)
-console.log('Spawning PTY...')
-const decoder = new TextDecoder(),
-  handle = await sandbox.pty.create({
-    cols: 120,
-    cwd: home,
-    envs: { TERM: 'xterm-256color' },
-    onData: (data: Uint8Array) => {
-      process.stdout.write(decoder.decode(data))
-    },
-    rows: 40,
-    timeoutMs: 300_000
-  }),
-  prompt = process.argv[2] ?? 'say hello and create a file called hello.txt with Hello World'
-await sandbox.pty.sendInput(
-  handle.pid,
-  new TextEncoder().encode(`codex --dangerously-bypass-approvals-and-sandbox --search --no-alt-screen "${prompt}"\n`)
+console.log('Running codex exec --json...')
+const result = await sandbox.commands.run(
+  `cd ${home} && codex exec --dangerously-bypass-approvals-and-sandbox --json "say hello and create a file called hello.txt with Hello World"`,
+  { timeoutMs: 300_000 }
 )
-await new Promise<void>(resolve => {
-  setTimeout(resolve, 120_000)
-})
-console.log('\n\n=== Checking results ===')
-const lsResult = await sandbox.commands.run(`ls -la ${home}/`)
-console.log(lsResult.stdout)
+console.log('\n=== STDOUT (JSONL events) ===')
+for (const line of result.stdout.split('\n').filter(Boolean))
+  try {
+    const event: unknown = JSON.parse(line)
+    console.log(JSON.stringify(event, null, 2))
+  } catch {
+    console.log('RAW:', line)
+  }
+if (result.stderr) {
+  console.log('\n=== STDERR ===')
+  console.log(result.stderr)
+}
+console.log('\n=== Files ===')
+const ls = await sandbox.commands.run(`ls -la ${home}/`)
+console.log(ls.stdout)
 await sandbox.kill()
 console.log('Done')

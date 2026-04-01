@@ -8,12 +8,13 @@
   "scripts": {
     "build": "turbo run build --output-logs=errors-only",
     "check": "lintmax check",
-    "ci": "bun run tsc && bun run check && bun run build",
     "clean": "rm -rf bun.lock node_modules .cache **/node_modules **/.cache **/.next **/.turbo **/dist",
     "dev": "turbo watch dev",
     "fix": "lintmax fix && turbo typecheck build --output-logs=errors-only",
     "format": "lintmax fix",
-    "test": "turbo run test"
+    "prepare": "git config core.hooksPath .githooks",
+    "test": "turbo run test",
+    "verify": "bun run tsc && bun run check && bun run build"
   },
   "dependencies": {
     "e2b": "latest"

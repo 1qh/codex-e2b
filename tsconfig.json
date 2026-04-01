@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["lintmax.config.ts", "poc.ts"]
+  "include": ["lintmax.config.ts", "poc.ts", "poc-exec.ts"]
 }
