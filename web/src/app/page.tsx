@@ -54,10 +54,10 @@ const nextId = () => {
       ]
     return []
   }
-type Status = 'closed' | 'connecting' | 'ready' | 'running'
-const useSocket = () => {
+type Status = 'closed' | 'init' | 'ready' | 'running'
+const useSocket = (credential: string) => {
     const [messages, setMessages] = useState<Message[]>([]),
-      [status, setStatus] = useState<Status>('closed'),
+      [status, setStatus] = useState<Status>(credential ? 'init' : 'closed'),
       wsRef = useRef<null | WebSocket>(null),
       scrollRef = useRef<HTMLDivElement>(null),
       addMessages = useCallback((...msgs: Message[]) => {
@@ -67,16 +67,18 @@ const useSocket = () => {
         })
       }, [])
     useEffect(() => {
+      if (!credential) return
       const ws = new WebSocket(WS_URL)
       wsRef.current = ws
       const onOpen = () => {
-          addMessages({ content: 'Connecting to sandbox...', id: nextId(), role: 'status' })
+          ws.send(JSON.stringify({ credential, type: 'init' }))
+          addMessages({ content: 'Preparing sandbox...', id: nextId(), role: 'status' })
         },
         onMessage = (e: MessageEvent) => {
           const data = JSON.parse(String(e.data)) as { event?: CodexEvent; message?: string; type: string }
           if (data.type === 'status' && data.message?.includes('ready')) {
             setStatus('ready')
-            addMessages({ content: 'Sandbox ready. Type a prompt to start.', id: nextId(), role: 'status' })
+            addMessages({ content: 'Ready.', id: nextId(), role: 'status' })
           }
           if (data.type === 'event' && data.event) addMessages(...parseEvent(data.event))
           if (data.type === 'done') setStatus('ready')
@@ -93,11 +95,11 @@ const useSocket = () => {
         ws.removeEventListener('close', onClose)
         ws.close()
       }
-    }, [addMessages])
+    }, [addMessages, credential])
     const send = useCallback(
       (prompt: string) => {
         addMessages({ content: prompt, id: nextId(), role: 'user' })
-        wsRef.current?.send(JSON.stringify({ prompt }))
+        wsRef.current?.send(JSON.stringify({ prompt, type: 'prompt' }))
         setStatus('running')
       },
       [addMessages]
@@ -105,13 +107,41 @@ const useSocket = () => {
     return { messages, scrollRef, send, status }
   },
   Page = () => {
-    const { messages, scrollRef, send, status } = useSocket(),
+    const [credential, setCredential] = useState(''),
+      [started, setStarted] = useState(false),
+      active = started ? credential : '',
+      { messages, scrollRef, send, status } = useSocket(active),
       [input, setInput] = useState(''),
       handleSubmit = () => {
         if (!input.trim() || status !== 'ready') return
         send(input)
         setInput('')
       }
+    if (!started)
+      return (
+        <main className='flex h-screen items-center justify-center'>
+          <form
+            className='flex w-80 flex-col gap-3'
+            onSubmit={e => {
+              e.preventDefault()
+              if (credential.trim()) setStarted(true)
+            }}>
+            <h1 className='text-xl font-bold'>Claw</h1>
+            <p className='text-sm text-muted-foreground'>
+              Paste your OpenAI API key or the contents of ~/.codex/auth.json
+            </p>
+            <Input
+              onChange={e => setCredential(e.target.value)}
+              placeholder='sk-... or {"auth_mode":...}'
+              type='password'
+              value={credential}
+            />
+            <Button disabled={!credential.trim()} type='submit'>
+              Start
+            </Button>
+          </form>
+        </main>
+      )
     return (
       <main className='mx-auto flex h-screen max-w-2xl flex-col gap-4 p-4'>
         <header className='flex items-center gap-2'>
