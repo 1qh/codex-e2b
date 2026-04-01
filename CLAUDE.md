@@ -4,13 +4,11 @@ Codex CLI (`@openai/codex`) running in E2B sandboxes (`e2b`), streamed to the br
 
 ## Working directory
 
-`~/claw/codex-e2b` — this is the active repo. Other experiments are archived:
-- `~/claw/claw-exp` — OpenClaw gateway experiment (archived)
-- `~/claw/pi-exp` — pi-coding-agent experiment (archived)
+`~/claw/codex-e2b` — this is the active repo. Other experiments are archived at `~/claw/claw-exp` and `~/claw/pi-exp`.
 
-## Key discovery
+## Key insight
 
-OpenClaw wraps `pi-coding-agent` which wraps `pi-agent-core` + `pi-ai`. The gateway hides tool result content from the event stream — making full audit trails impossible. Codex CLI gives us everything natively via PTY streaming.
+PTY streaming gives full observability — every tool call, result, and thinking block is visible in the terminal output. No middleware, no event parsing, no black boxes.
 
 ## Codex CLI flags
 
@@ -76,9 +74,5 @@ See PLAN.md for phases. Phase 1 = terminal in browser (MVP).
 
 Applicable docs from experiments preserved in `brainstorm/`:
 - `vision.md` — fire-and-forget agent-native SaaS concept
-- `agent-native.md` — CLIs as backend, knowledge as files
 - `boundaries.md` — what this is and is NOT good for
-- `feedback.md` — ratings, redo, agent learning loop
-- `personalization.md` — memory as core, workspace handles it
-- `observability.md` — usage tracking, metering (needs rewrite for new stack)
-- `lessons-learned.md` — what we learned from OpenClaw and pi experiments
+- `lessons-learned.md` — what we learned from previous experiments and why we chose this stack
