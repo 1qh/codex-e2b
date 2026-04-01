@@ -2,11 +2,7 @@ import type { Sandbox } from 'e2b'
 import { Elysia, t } from 'elysia'
 import { env } from './env'
 import { createSandbox, runCodex } from './sandbox'
-interface WsData {
-  home: string
-  sandbox: Sandbox
-}
-const sandboxes = new Map<string, WsData>(),
+const sandboxes = new Map<string, Sandbox>(),
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app = new Elysia()
     .ws('/ws', {
@@ -14,33 +10,32 @@ const sandboxes = new Map<string, WsData>(),
         prompt: t.String()
       }),
       close: async ws => {
-        const data = sandboxes.get(ws.id)
-        if (data) {
-          await data.sandbox.kill()
+        const sandbox = sandboxes.get(ws.id)
+        if (sandbox) {
+          await sandbox.kill()
           sandboxes.delete(ws.id)
         }
       },
       message: async (ws, { prompt }) => {
-        const data = sandboxes.get(ws.id)
-        if (!data) {
+        const sandbox = sandboxes.get(ws.id)
+        if (!sandbox) {
           ws.send({ message: 'sandbox not ready', type: 'error' })
           return
         }
         const handle = await runCodex({
-          home: data.home,
           onEvent: event => {
             ws.send({ event, type: 'event' })
           },
           prompt,
-          sandbox: data.sandbox
+          sandbox
         })
         await handle.wait()
         ws.send({ type: 'done' })
       },
       open: async ws => {
         ws.send({ message: 'preparing sandbox...', type: 'status' })
-        const data = await createSandbox()
-        sandboxes.set(ws.id, data)
+        const sandbox = await createSandbox()
+        sandboxes.set(ws.id, sandbox)
         ws.send({ message: 'sandbox ready', type: 'status' })
       }
     })
