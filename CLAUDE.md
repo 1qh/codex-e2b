@@ -28,7 +28,7 @@ codex --dangerously-bypass-approvals-and-sandbox --search --no-alt-screen "promp
 4. `sandbox.commands.run('git init && git config ...')` (Codex requires git)
 5. `sandbox.pty.create({ cols, rows, onData, envs: { TERM: 'xterm-256color' } })`
 6. `sandbox.pty.sendInput(pid, 'codex --flags "prompt"\n')`
-7. Auto-accept trust prompt: detect "Press enter to continue" in onData, send `\r`
+7. Auto-accept trust prompt: detect “Press enter to continue” in onData, send `\r`
 
 ## Auth
 
@@ -73,6 +73,7 @@ See PLAN.md for phases. Phase 1 = terminal in browser (MVP).
 ## Brainstorm docs
 
 Applicable docs from experiments preserved in `brainstorm/`:
+
 - `vision.md` — fire-and-forget agent-native SaaS concept
 - `boundaries.md` — what this is and is NOT good for
 - `lessons-learned.md` — what we learned from previous experiments and why we chose this stack

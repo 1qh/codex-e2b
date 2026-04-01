@@ -1,0 +1,26 @@
+{
+  "name": "@a/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build --turbo",
+    "clean": "rm -rf .cache .next .turbo node_modules",
+    "dev": "next dev --turbo --port 3000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@a/ui": "workspace:*",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}

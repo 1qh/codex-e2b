@@ -4,4 +4,7 @@ bun.lock
 .env
 *.log
 .turbo
+.cache
+.eslintcache
 dist
+.cache/

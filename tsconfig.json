@@ -1,0 +1,7 @@
+{
+  "extends": "lintmax/tsconfig",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["lintmax.config.ts", "poc.ts"]
+}
