@@ -9,11 +9,14 @@ interface WsData {
 // eslint-disable-next-line no-console
 console.log('Pre-warming sandbox...')
 const warmPool: WsData[] = [],
+  waiters: ((data: WsData) => void)[] = [],
   replenish = () => {
     ;(async () => {
       try {
-        const data = await createSandbox()
-        warmPool.push(data)
+        const data = await createSandbox(),
+          waiter = waiters.shift()
+        if (waiter) waiter(data)
+        else warmPool.push(data)
         // eslint-disable-next-line no-console
         console.log('Sandbox warm and ready')
       } catch (error) {
@@ -22,10 +25,17 @@ const warmPool: WsData[] = [],
       }
     })()
   },
-  initial = await createSandbox()
-warmPool.push(initial)
-// eslint-disable-next-line no-console
-console.log('Sandbox warm and ready')
+  acquire = (): Promise<WsData> | WsData => {
+    const warm = warmPool.pop()
+    if (warm) {
+      replenish()
+      return warm
+    }
+    return new Promise<WsData>(resolve => {
+      waiters.push(resolve)
+    })
+  }
+replenish()
 const sandboxes = new Map<string, WsData>(),
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app = new Elysia()
@@ -57,15 +67,11 @@ const sandboxes = new Map<string, WsData>(),
         await handle.wait()
         ws.send({ type: 'done' })
       },
-      open: ws => {
-        const warm = warmPool.pop()
-        if (warm) {
-          sandboxes.set(ws.id, warm)
-          ws.send({ message: 'sandbox ready', type: 'status' })
-          replenish()
-          return
-        }
-        ws.send({ message: 'sandbox not ready, please wait...', type: 'status' })
+      open: async ws => {
+        ws.send({ message: 'preparing sandbox...', type: 'status' })
+        const data = await acquire()
+        sandboxes.set(ws.id, data)
+        ws.send({ message: 'sandbox ready', type: 'status' })
       }
     })
     .listen(env.PORT)
