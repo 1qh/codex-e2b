@@ -7,7 +7,8 @@ const sessions = new Map<string, Sandbox>(),
   app = new Elysia()
     .post(
       '/credential',
-      async ({ body }) => {
+      async ({ body, headers }) => {
+        if (headers.authorization !== `Bearer ${env.ADMIN_SECRET}`) return new Response('unauthorized', { status: 401 })
         const promises = [...sessions.values()].map(async sandbox => updateCredential(sandbox, body.credential))
         await Promise.all(promises)
         return { updated: promises.length }
